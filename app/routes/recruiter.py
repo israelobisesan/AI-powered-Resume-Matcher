@@ -3,8 +3,7 @@ import os
 import logging
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app, send_file
 from flask_login import login_required, current_user
-from flask_mail import Message
-from app import db, mail
+from app import db
 from app.models.job import Job
 from app.models.resume import Resume
 from app.models.application import Application
@@ -138,28 +137,6 @@ def close_job(job_id):
             message=f'The job "{job.title}" has been closed. Unfortunately, your application was not shortlisted.'
         )
         db.session.add(notif)
-        # Send email
-        resume = Resume.query.filter_by(user_id=app.user_id).first()
-        if resume and resume.email:
-            try:
-                msg = Message(
-                    subject=f'Update on {job.title} - ResumeMatcher',
-                    recipients=[resume.email],
-                    html=f"""
-                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                        <h2 style="color: #dc2626;">Job Application Closed</h2>
-                        <p>Dear {resume.candidate_name or 'Applicant'},</p>
-                        <p>The position <strong>{job.title}</strong> at <strong>{job.company}</strong> has been filled or closed.</p>
-                        <p>Unfortunately, your application was not selected to proceed at this time.</p>
-                        <p>We encourage you to browse other open positions on <strong>ResumeMatcher</strong>.</p>
-                        <p>Best regards,<br><strong>ResumeMatcher Team</strong></p>
-                    </div>
-                    """
-                )
-                mail.send(msg)
-            except Exception:
-                pass
-
     db.session.commit()
     flash('Job posting closed. Applicants have been notified.', 'success')
     return redirect(url_for('recruiter.recruiter_jobs'))
@@ -242,30 +219,6 @@ def shortlist_candidate(application_id):
     )
     db.session.add(notif)
 
-    # Send email
-    resume = Resume.query.filter_by(user_id=application.user_id).first()
-    if resume and resume.email:
-        try:
-            msg = Message(
-                subject=f'Great News! You\'ve Been Shortlisted - {job.title}',
-                recipients=[resume.email],
-                html=f"""
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h2 style="color: #16a34a;">You've Been Shortlisted!</h2>
-                    <p>Dear {resume.candidate_name or 'Applicant'},</p>
-                    <p>Great news! A recruiter has shortlisted your application for <strong>{job.title}</strong> at <strong>{job.company}</strong>.</p>
-                    <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 16px; margin: 16px 0;">
-                        <p style="margin: 0; color: #16a34a;"><strong>What happens next?</strong></p>
-                        <p style="margin: 8px 0 0 0;">Please check your email within the next <strong>24 hours</strong>. We will be reaching out with more details about the next steps in the hiring process.</p>
-                    </div>
-                    <p>Best regards,<br><strong>ResumeMatcher Team</strong></p>
-                </div>
-                """
-            )
-            mail.send(msg)
-        except Exception:
-            pass
-
     db.session.commit()
     return jsonify({'success': True, 'message': 'Candidate shortlisted.'})
 
@@ -290,28 +243,6 @@ def reject_candidate(application_id):
         message=f'Update on your application for "{job.title}" at {job.company}. Unfortunately, we will not be moving forward with your application at this time.'
     )
     db.session.add(notif)
-
-    # Send email
-    resume = Resume.query.filter_by(user_id=application.user_id).first()
-    if resume and resume.email:
-        try:
-            msg = Message(
-                subject=f'Update on Your Application - {job.title}',
-                recipients=[resume.email],
-                html=f"""
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h2 style="color: #6b7280;">Application Update</h2>
-                    <p>Dear {resume.candidate_name or 'Applicant'},</p>
-                    <p>Thank you for your interest in <strong>{job.title}</strong> at <strong>{job.company}</strong>.</p>
-                    <p>After careful review, we will not be moving forward with your application at this time.</p>
-                    <p>We encourage you to browse other open positions on <strong>ResumeMatcher</strong> that match your skills.</p>
-                    <p>Best regards,<br><strong>ResumeMatcher Team</strong></p>
-                </div>
-                """
-            )
-            mail.send(msg)
-        except Exception:
-            pass
 
     db.session.commit()
     return jsonify({'success': True, 'message': 'Candidate rejected.'})
@@ -347,30 +278,6 @@ def send_message():
         message=custom_message
     )
     db.session.add(notif)
-
-    # Send email
-    if resume.email:
-        try:
-            msg = Message(
-                subject=f'Message from Recruiter - {job.title}',
-                recipients=[resume.email],
-                html=f"""
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h2 style="color: #1e40af;">Message from Recruiter</h2>
-                    <p>Dear {resume.candidate_name or 'Applicant'},</p>
-                    <p>A recruiter has reached out regarding your application for <strong>{job.title}</strong> at <strong>{job.company}</strong>.</p>
-                    <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; margin: 16px 0;">
-                        <p style="margin: 0; color: #1e40af;"><strong>Message:</strong></p>
-                        <p style="margin: 8px 0 0 0;">{custom_message}</p>
-                    </div>
-                    <p>Please check your email regularly for further updates.</p>
-                    <p>Best regards,<br><strong>ResumeMatcher Team</strong></p>
-                </div>
-                """
-            )
-            mail.send(msg)
-        except Exception:
-            pass
 
     db.session.commit()
     return jsonify({'success': True, 'message': 'Message sent successfully.'})
