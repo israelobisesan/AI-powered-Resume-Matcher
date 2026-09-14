@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">My Profile</h1>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <h2 class="text-lg font-bold text-gray-900 mb-4">Account Information</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+            <div>
+                <label class="text-sm text-gray-500">Name</label>
+                <p class="font-medium text-gray-900">{{ current_user.name }}</p>
+            </div>
+            <div>
+                <label class="text-sm text-gray-500">Email</label>
+                <p class="font-medium text-gray-900">{{ current_user.email }}</p>
+            </div>
+            <div>
+                <label class="text-sm text-gray-500">Role</label>
+                <p class="font-medium text-gray-900">{{ current_user.role.replace('_', ' ').title() }}</p>
+            </div>
+            <div>
+                <label class="text-sm text-gray-500">Member Since</label>
+                <p class="font-medium text-gray-900">{{ current_user.created_at.strftime('%B %d, %Y') }}</p>
+            </div>
+        </div>
+    </div>
+
+    {% if resume %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-bold text-gray-900">Resume Profile</h2>
+            <a href="{{ url_for('resume.edit_resume') }}" class="text-primary-600 hover:text-primary-700 text-sm font-medium">Edit</a>
+        </div>
+        <div class="grid md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="text-sm text-gray-500">Name on Resume</label>
+                <p class="font-medium text-gray-900">{{ resume.candidate_name or 'Not detected' }}</p>
+            </div>
+            <div>
+                <label class="text-sm text-gray-500">Phone</label>
+                <p class="font-medium text-gray-900">{{ resume.phone or 'Not detected' }}</p>
+            </div>
+        </div>
+        {% if skills %}
+        <div class="mb-4">
+            <label class="text-sm text-gray-500 mb-2 block">Skills ({{ skills|length }})</label>
+            <div class="flex flex-wrap gap-2">
+                {% for skill in skills %}
+                <span class="px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm">{{ skill }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% if education %}
+        <div class="mb-4">
+            <label class="text-sm text-gray-500 mb-2 block">Education</label>
+            {% for edu in education %}
+            <p class="text-sm text-gray-700">{{ edu.degree }}{% if edu.field %} in {{ edu.field }}{% endif %} - {{ edu.institution or 'Unknown' }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <a href="{{ url_for('resume.view_resume') }}" class="text-primary-600 hover:underline text-sm">View Full Resume &rarr;</a>
+    </div>
+    {% else %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+        <div class="text-4xl mb-4">📄</div>
+        <p class="text-gray-500 mb-4">No resume uploaded yet.</p>
+        <a href="{{ url_for('resume.upload_resume') }}" class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition">
+            Upload Resume
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

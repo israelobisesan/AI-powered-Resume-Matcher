@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Upload Resume{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">Upload Resume</h1>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        <form method="POST" enctype="multipart/form-data" id="upload-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center hover:border-primary-400 transition" id="drop-zone">
+                <div class="text-4xl mb-4">📄</div>
+                <p class="text-lg font-medium text-gray-700 mb-2">Drag & drop your resume here</p>
+                <p class="text-sm text-gray-500 mb-4">or click to browse</p>
+                <input type="file" name="resume" id="resume-input" accept=".pdf,.docx" class="hidden" required>
+                <button type="button" onclick="document.getElementById('resume-input').click()" class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition">
+                    Choose File
+                </button>
+                <p class="text-xs text-gray-400 mt-4">Supported formats: PDF, DOCX (Max 16MB)</p>
+            </div>
+
+            <div id="file-info" class="hidden mt-4 p-4 bg-gray-50 rounded-lg">
+                <p class="text-sm text-gray-700"><span class="font-medium">Selected:</span> <span id="file-name"></span></p>
+            </div>
+
+            <div class="mt-6">
+                <button type="submit" id="submit-btn" class="w-full bg-primary-600 text-white py-3 rounded-lg font-semibold hover:bg-primary-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    Upload & Process Resume
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('resume-input');
+const fileInfo = document.getElementById('file-info');
+const fileName = document.getElementById('file-name');
+const submitBtn = document.getElementById('submit-btn');
+
+dropZone.addEventListener('click', () => fileInput.click());
+
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('border-primary-500', 'bg-primary-50');
+});
+
+dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('border-primary-500', 'bg-primary-50');
+});
+
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('border-primary-500', 'bg-primary-50');
+    if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        showFileInfo(e.dataTransfer.files[0]);
+    }
+});
+
+fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length) {
+        showFileInfo(e.target.files[0]);
+    }
+});
+
+function showFileInfo(file) {
+    fileName.textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+    fileInfo.classList.remove('hidden');
+}
+
+document.getElementById('upload-form').addEventListener('submit', () => {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Processing...';
+});
+</script>
+{% endblock %}

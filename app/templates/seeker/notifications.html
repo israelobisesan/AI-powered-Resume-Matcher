@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">Notifications</h1>
+
+    {% if notifications %}
+    <div class="space-y-3">
+        {% for notif in notifications %}
+        <div class="bg-white rounded-xl shadow-sm border p-6 transition hover:shadow-md {% if not notif.is_read %}border-primary-200 bg-primary-50{% else %}border-gray-200{% endif %}" id="notif-{{ notif.id }}">
+            <div class="flex justify-between items-start">
+                <div class="flex-grow">
+                    <div class="flex items-center space-x-2 mb-2">
+                        {% if not notif.is_read %}
+                        <span class="w-2 h-2 bg-red-500 rounded-full"></span>
+                        {% endif %}
+                        <span class="text-sm font-medium text-gray-900">{{ notif.recruiter.name }}</span>
+                        <span class="text-xs text-gray-400">{{ notif.created_at.strftime('%b %d, %Y at %I:%M %p') }}</span>
+                    </div>
+                    <p class="text-gray-700">{{ notif.message }}</p>
+                    <a href="{{ url_for('seeker.job_detail', job_id=notif.job_id) }}" class="text-sm text-primary-600 hover:underline mt-2 inline-block">View Job: {{ notif.job.title }}</a>
+                </div>
+                {% if not notif.is_read %}
+                <button onclick="markRead({{ notif.id }})" class="ml-4 px-3 py-1 text-xs text-primary-600 hover:bg-primary-100 rounded-lg transition">
+                    Mark as read
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+        <div class="text-4xl mb-4">🔔</div>
+        <p class="text-gray-500">No notifications yet. You'll be notified when a recruiter takes action on your applications.</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+async function markRead(notifId) {
+    try {
+        const resp = await fetch('/api/read-notification/' + notifId, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken }
+        });
+        const data = await resp.json();
+        if (data.success) {
+            const el = document.getElementById('notif-' + notifId);
+            el.classList.remove('border-primary-200', 'bg-primary-50');
+            el.classList.add('border-gray-200');
+            const dot = el.querySelector('.bg-red-500');
+            if (dot) dot.remove();
+            const btn = el.querySelector('button');
+            if (btn) btn.remove();
+        }
+    } catch (err) {
+        console.error('Failed to mark as read:', err);
+    }
+}
+</script>
+{% endblock %}

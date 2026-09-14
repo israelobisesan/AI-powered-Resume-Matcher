@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}My Jobs{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">My Job Postings</h1>
+        <a href="{{ url_for('recruiter.create_job') }}" class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition text-sm font-medium">
+            + New Job
+        </a>
+    </div>
+
+    {% if jobs %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="text-left px-6 py-3 text-sm font-medium text-gray-500">Job Title</th>
+                    <th class="text-left px-6 py-3 text-sm font-medium text-gray-500">Company</th>
+                    <th class="text-left px-6 py-3 text-sm font-medium text-gray-500">Location</th>
+                    <th class="text-left px-6 py-3 text-sm font-medium text-gray-500">Status</th>
+                    <th class="text-left px-6 py-3 text-sm font-medium text-gray-500">Created</th>
+                    <th class="text-right px-6 py-3 text-sm font-medium text-gray-500">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for job in jobs %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 font-medium text-gray-900">{{ job.title }}</td>
+                    <td class="px-6 py-4 text-gray-600">{{ job.company }}</td>
+                    <td class="px-6 py-4 text-gray-600">{{ job.location or '-' }}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 rounded-full text-xs font-medium {% if job.status == 'open' %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-600{% endif %}">
+                            {{ job.status.title() }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-500">{{ job.created_at.strftime('%b %d, %Y') }}</td>
+                    <td class="px-6 py-4 text-right space-x-2">
+                        <a href="{{ url_for('recruiter.candidates', job_id=job.id) }}" class="text-primary-600 hover:text-primary-700 text-sm">Candidates</a>
+                        <a href="{{ url_for('recruiter.edit_job', job_id=job.id) }}" class="text-gray-600 hover:text-gray-700 text-sm">Edit</a>
+                        {% if job.status == 'open' %}
+                        <form method="POST" action="{{ url_for('recruiter.close_job', job_id=job.id) }}" class="inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="text-yellow-600 hover:text-yellow-700 text-sm" onclick="return confirm('Close this job?')">Close</button>
+                        </form>
+                        {% endif %}
+                        <form method="POST" action="{{ url_for('recruiter.delete_job', job_id=job.id) }}" class="inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="text-red-600 hover:text-red-700 text-sm" onclick="return confirm('Delete this job?')">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+        <div class="text-4xl mb-4">💼</div>
+        <p class="text-gray-500 mb-4">No job postings yet</p>
+        <a href="{{ url_for('recruiter.create_job') }}" class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition">
+            Create Your First Job
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

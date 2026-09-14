@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Recruiter{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Welcome, {{ current_user.name }}</h1>
+            <p class="text-gray-600 mt-1">Manage your job postings and candidates</p>
+        </div>
+        <a href="{{ url_for('recruiter.create_job') }}" class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition text-sm font-medium">
+            + New Job
+        </a>
+    </div>
+
+    <div class="grid md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Total Jobs</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ total_jobs }}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <span class="text-xl">💼</span>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Open Jobs</p>
+                    <p class="text-3xl font-bold text-green-600">{{ open_jobs }}</p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <span class="text-xl">✅</span>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Applications</p>
+                    <p class="text-3xl font-bold text-indigo-600">{{ total_applications }}</p>
+                </div>
+                <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <span class="text-xl">📋</span>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Closed</p>
+                    <p class="text-3xl font-bold text-gray-400">{{ closed_jobs }}</p>
+                </div>
+                <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                    <span class="text-xl">🔒</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+            <h2 class="text-xl font-bold text-gray-900">Recent Job Postings</h2>
+        </div>
+        {% if jobs %}
+        <div class="divide-y divide-gray-200">
+            {% for job in jobs[:5] %}
+            <div class="p-6 hover:bg-gray-50 transition">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="font-semibold text-gray-900">{{ job.title }}</h3>
+                        <p class="text-sm text-gray-500">{{ job.company }} &bull; {{ job.location or 'Remote' }}</p>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-xs font-medium {% if job.status == 'open' %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-600{% endif %}">
+                        {{ job.status.title() }}
+                    </span>
+                </div>
+                <div class="mt-3 flex space-x-3">
+                    <a href="{{ url_for('recruiter.candidates', job_id=job.id) }}" class="text-primary-600 hover:text-primary-700 text-sm font-medium">View Candidates</a>
+                    <a href="{{ url_for('recruiter.edit_job', job_id=job.id) }}" class="text-gray-600 hover:text-gray-700 text-sm">Edit</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="p-12 text-center text-gray-500">
+            <p class="text-lg mb-2">No job postings yet</p>
+            <p class="text-sm text-gray-400 mb-4">Create your first job posting to start receiving AI-ranked candidate matches.</p>
+            <a href="{{ url_for('recruiter.create_job') }}" class="inline-block bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition">
+                Create Job Posting
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

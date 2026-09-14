@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% block title %}{{ job.title }} - AI Resume Matcher{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <a href="{{ url_for('seeker.browse_jobs') }}" class="text-primary-600 hover:underline text-sm mb-4 inline-block">&larr; Back to Jobs</a>
+
+    <div class="flex justify-between items-start mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">{{ job.title }}</h1>
+            <p class="text-lg text-gray-600 mt-1">{{ job.company }} &bull; {{ job.location or 'Remote' }}</p>
+        </div>
+        <div class="flex items-center space-x-3">
+            <button onclick="toggleApply({{ job.id }}, this)" id="apply-btn" class="px-4 py-2 rounded-lg text-sm font-medium transition {% if application %}bg-green-100 text-green-700 hover:bg-green-200{% else %}bg-primary-600 text-white hover:bg-primary-700{% endif %}">
+                {% if application %}Applied{% else %}Apply Now{% endif %}
+            </button>
+            <button onclick="toggleSave({{ job.id }}, this)" id="save-btn" class="px-4 py-2 rounded-lg text-sm font-medium transition {% if is_saved %}bg-yellow-100 text-yellow-700 hover:bg-yellow-200{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">
+                {% if is_saved %}Saved{% else %}Save Job{% endif %}
+            </button>
+            {% if match %}
+            <div class="text-center bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                <div class="w-20 h-20 rounded-full flex items-center justify-center {% if match.final_score >= 70 %}bg-green-100{% elif match.final_score >= 50 %}bg-yellow-100{% else %}bg-red-100{% endif %}">
+                    <span class="text-2xl font-bold {% if match.final_score >= 70 %}text-green-600{% elif match.final_score >= 50 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                        {{ match.final_score }}%
+                    </span>
+                </div>
+                <p class="text-sm text-gray-500 mt-1">Match Score</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 class="text-lg font-bold text-gray-900 mb-3">Job Description</h2>
+                <p class="text-gray-700 whitespace-pre-line">{{ job.description }}</p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 class="text-lg font-bold text-gray-900 mb-3">Required Skills</h2>
+                <div class="flex flex-wrap gap-2">
+                    {% for skill in req_skills %}
+                    <span class="px-3 py-1 rounded-full text-sm {% if match and skill in match.matched_skills %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-700{% endif %}">
+                        {% if match and skill in match.matched_skills %}✓ {% endif %}{{ skill }}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% if pref_skills %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 class="text-lg font-bold text-gray-900 mb-3">Preferred Skills</h2>
+                <div class="flex flex-wrap gap-2">
+                    {% for skill in pref_skills %}
+                    <span class="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm">{{ skill }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="font-bold text-gray-900 mb-3">Details</h3>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between"><span class="text-gray-500">Type</span><span class="font-medium">{{ job.employment_type or 'Full-time' }}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">Experience</span><span class="font-medium">{{ job.minimum_experience or 0 }} years</span></div>
+                    {% if job.education_requirement %}
+                    <div class="flex justify-between"><span class="text-gray-500">Education</span><span class="font-medium">{{ job.education_requirement }}</span></div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if match %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="font-bold text-gray-900 mb-3">Match Breakdown</h3>
+                <div class="space-y-3">
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-500">Semantic Similarity</span>
+                            <span class="font-medium">{{ match.semantic_score }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-indigo-500 h-2 rounded-full" style="width: {{ match.semantic_score }}%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-500">Skill Match</span>
+                            <span class="font-medium">{{ match.skill_score }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: {{ match.skill_score }}%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-500">Capabilities</span>
+                            <span class="font-medium">{{ match.capability_score }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-500 h-2 rounded-full" style="width: {{ match.capability_score }}%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-500">Experience</span>
+                            <span class="font-medium">{{ match.experience_score }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-yellow-500 h-2 rounded-full" style="width: {{ match.experience_score }}%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-500">Education</span>
+                            <span class="font-medium">{{ match.education_score }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-purple-500 h-2 rounded-full" style="width: {{ match.education_score }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="font-bold text-gray-900 mb-2">Why this job matches</h3>
+                <p class="text-sm text-gray-600">{{ match.explanation }}</p>
+            </div>
+
+            {% if match.direct_matches %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="font-bold text-gray-900 mb-2">Direct Skill Matches</h3>
+                <div class="flex flex-wrap gap-1">
+                    {% for skill in match.direct_matches %}
+                    <span class="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full">{{ skill }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if match.related_matches %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="font-bold text-gray-900 mb-2">Related Skills</h3>
+                <div class="flex flex-wrap gap-1">
+                    {% for skill in match.related_matches %}
+                    <span class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full">{{ skill }}</span>
+                    {% endfor %}
+                </div>
+                <p class="text-xs text-gray-500 mt-2">These skills transfer from adjacent technologies you know.</p>
+            </div>
+            {% endif %}
+
+            {% if match.missing_skills %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="font-bold text-gray-900 mb-2">Missing Skills</h3>
+                <div class="flex flex-wrap gap-1">
+                    {% for skill in match.missing_skills %}
+                    <span class="text-xs px-2 py-1 bg-red-100 text-red-700 rounded-full">{{ skill }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+async function toggleSave(jobId, btn) {
+    try {
+        const resp = await fetch('/api/save-job/' + jobId, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken }
+        });
+        const data = await resp.json();
+        if (data.saved) {
+            btn.classList.remove('bg-gray-100', 'text-gray-600', 'hover:bg-gray-200');
+            btn.classList.add('bg-yellow-100', 'text-yellow-700', 'hover:bg-yellow-200');
+            btn.textContent = 'Saved';
+        } else {
+            btn.classList.remove('bg-yellow-100', 'text-yellow-700', 'hover:bg-yellow-200');
+            btn.classList.add('bg-gray-100', 'text-gray-600', 'hover:bg-gray-200');
+            btn.textContent = 'Save Job';
+        }
+    } catch (err) {
+        console.error('Failed to toggle save:', err);
+    }
+}
+
+async function toggleApply(jobId, btn) {
+    try {
+        const resp = await fetch('/api/apply-job/' + jobId, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken }
+        });
+        const data = await resp.json();
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
+        if (data.applied) {
+            btn.classList.remove('bg-primary-600', 'text-white', 'hover:bg-primary-700');
+            btn.classList.add('bg-green-100', 'text-green-700', 'hover:bg-green-200');
+            btn.textContent = 'Applied';
+        } else {
+            btn.classList.remove('bg-green-100', 'text-green-700', 'hover:bg-green-200');
+            btn.classList.add('bg-primary-600', 'text-white', 'hover:bg-primary-700');
+            btn.textContent = 'Apply Now';
+        }
+    } catch (err) {
+        console.error('Failed to toggle apply:', err);
+    }
+}
+</script>
+{% endblock %}
