@@ -17,7 +17,6 @@ def create_app(config_name='default'):
 
     db.init_app(app)
     login_manager.init_app(app)
-    mail.init_app(app)
     csrf.init_app(app)
 
     from app.models.user import User
