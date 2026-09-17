@@ -1,6 +1,5 @@
 import json
 import logging
-from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
 from app import db
@@ -210,3 +209,18 @@ def profile():
     education = json.loads(resume.education) if resume and resume.education else []
     experience = json.loads(resume.work_experience) if resume and resume.work_experience else []
     return render_template('seeker/profile.html', resume=resume, skills=skills, education=education, experience=experience)
+
+
+@seeker_bp.route('/seeker/profile/edit', methods=['GET', 'POST'])
+@login_required
+@role_required('job_seeker')
+def edit_profile():
+    if request.method == 'POST':
+        new_name = request.form.get('name', '').strip()
+        if new_name and len(new_name) <= 100:
+            current_user.name = new_name
+            db.session.commit()
+            flash('Name updated successfully!', 'success')
+            return redirect(url_for('seeker.profile'))
+        flash('Name must be between 1 and 100 characters.', 'error')
+    return render_template('seeker/edit_profile.html')

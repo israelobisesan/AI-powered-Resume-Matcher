@@ -1,4 +1,3 @@
-import json
 from config import Config
 from app.services.embedding_service import (
     deserialize_embedding, cosine_similarity_vec, serialize_embedding
@@ -11,14 +10,16 @@ SKILL_RELATIONSHIPS = {
     'flask': ['python', 'python web frameworks', 'web development'],
     'fastapi': ['python', 'python web frameworks', 'web development'],
     'express': ['javascript', 'node.js', 'web development'],
-    'react': ['javascript', 'frontend development', 'react.js'],
+    'react': ['javascript', 'frontend development', 'html', 'css', 'react.js'],
     'react.js': ['javascript', 'frontend development', 'react'],
     'vue': ['javascript', 'frontend development', 'vue.js'],
     'vue.js': ['javascript', 'frontend development', 'vue'],
     'angular': ['javascript', 'frontend development', 'typescript'],
-    'next.js': ['react', 'javascript', 'node.js', 'frontend development'],
+    'next.js': ['react', 'javascript', 'node.js', 'frontend development', 'web development'],
+    'nextjs': ['react', 'javascript', 'node.js', 'frontend development', 'web development'],
     'node.js': ['javascript', 'backend development', 'server-side programming'],
     'nodejs': ['javascript', 'backend development', 'server-side programming'],
+    'django rest framework': ['django', 'python', 'rest api', 'web development'],
 
     # Database -> Data
     'postgresql': ['sql', 'databases', 'relational databases'],
@@ -35,13 +36,23 @@ SKILL_RELATIONSHIPS = {
     'gcp': ['cloud computing', 'cloud platforms', 'infrastructure'],
     'azure': ['cloud computing', 'cloud platforms', 'infrastructure'],
     'ci/cd': ['devops', 'deployment', 'automation'],
+    'github': ['git', 'version control', 'code collaboration'],
+    'github actions': ['ci/cd', 'devops', 'automation', 'git'],
+    'gitlab': ['git', 'version control', 'ci/cd'],
+    'bitbucket': ['git', 'version control'],
+    'nginx': ['web server', 'reverse proxy', 'infrastructure'],
+    'apache': ['web server', 'infrastructure'],
+    'firebase': ['databases', 'cloud platforms', 'backend as a service'],
 
     # Languages -> Domains
     'python': ['programming', 'backend development', 'data science', 'scripting'],
     'javascript': ['programming', 'web development', 'frontend development', 'backend development'],
     'java': ['programming', 'enterprise development', 'backend development'],
-    'typescript': ['programming', 'web development', 'frontend development'],
+    'typescript': ['programming', 'web development', 'frontend development', 'javascript'],
     'sql': ['databases', 'data querying', 'data analysis'],
+    'bash': ['scripting', 'command line', 'automation', 'devops'],
+    'html': ['web development', 'frontend development'],
+    'css': ['web development', 'frontend development', 'styling'],
 
     # Data -> Roles
     'machine learning': ['data science', 'artificial intelligence', 'predictive modeling'],
@@ -50,10 +61,12 @@ SKILL_RELATIONSHIPS = {
     'tableau': ['data visualization', 'business intelligence', 'data analysis'],
     'pandas': ['data analysis', 'python', 'data manipulation'],
     'numpy': ['data science', 'python', 'numerical computing'],
+    'scikit-learn': ['machine learning', 'python', 'data science'],
+    'sklearn': ['machine learning', 'python', 'data science'],
+    'tensorflow': ['machine learning', 'deep learning', 'python'],
+    'pytorch': ['machine learning', 'deep learning', 'python'],
 
     # Frontend
-    'html': ['web development', 'frontend development'],
-    'css': ['web development', 'frontend development', 'styling'],
     'tailwind css': ['web development', 'frontend development', 'css', 'styling'],
     'bootstrap': ['web development', 'frontend development', 'css', 'styling'],
 
@@ -133,10 +146,71 @@ def compute_skill_score(skill_matches):
     return round(min(100.0, score), 1)
 
 
+def _tokenize(text):
+    """Tokenize text into meaningful words, removing common stop words."""
+    stop_words = {'and', 'the', 'a', 'an', 'in', 'on', 'of', 'for', 'to', 'with',
+                  'by', 'from', 'or', 'at', 'as', 'is', 'are', 'was', 'were', 'be',
+                  'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will',
+                  'would', 'could', 'should', 'may', 'might', 'can', 'shall', 'that',
+                  'this', 'these', 'those', 'it', 'its', 'their', 'our', 'your', 'my'}
+    words = set(text.lower().split())
+    return words - stop_words
+
+
+def _tokens_overlap(tokens_a, tokens_b, threshold=0.4):
+    """Check if two token sets overlap.
+
+    Uses containment: if enough of the SMALLER set's tokens appear in the LARGER set.
+    This handles verbose Gemini resume caps vs short job caps.
+    """
+    if not tokens_a or not tokens_b:
+        return False
+    intersection = tokens_a & tokens_b
+    if not intersection:
+        return False
+    # Containment: what % of the smaller set is in the larger set?
+    smaller = min(len(tokens_a), len(tokens_b))
+    return len(intersection) / smaller >= threshold
+
+
+def _capabilities_match(job_cap, candidate_caps, candidate_tokens_map):
+    """Check if a job capability matches any candidate capability using fuzzy matching."""
+    job_tokens = _tokenize(job_cap)
+
+    # 1. Exact match (after lowercasing)
+    if job_cap in candidate_caps:
+        return True
+
+    # 2. Substring containment
+    for cand_cap in candidate_caps:
+        if job_cap in cand_cap or cand_cap in job_cap:
+            return True
+
+    # 3. Token overlap fuzzy matching
+    for cand_cap in candidate_caps:
+        cand_tokens = candidate_tokens_map[cand_cap]
+        if _tokens_overlap(job_tokens, cand_tokens, threshold=0.4):
+            return True
+
+    # 4. Check expanded SKILL_RELATIONSHIPS
+    expanded_tokens = set()
+    for word in job_tokens:
+        related = SKILL_RELATIONSHIPS.get(word, [])
+        for r in related:
+            expanded_tokens.update(_tokenize(r))
+    for cand_cap in candidate_caps:
+        cand_tokens = candidate_tokens_map[cand_cap]
+        if cand_tokens & expanded_tokens:
+            return True
+
+    return False
+
+
 def compute_capability_score(candidate_analysis, job_analysis):
     """Compute capability match score (0-100).
 
-    Compares inferred capabilities from both sides.
+    Compares inferred capabilities from both sides using fuzzy token matching.
+    Handles Gemini's verbose natural-language capability descriptions.
     """
     candidate_caps = {c.lower().strip() for c in candidate_analysis.get('inferred_capabilities', []) if c}
     job_caps = {c.lower().strip() for c in job_analysis.get('inferred_capabilities', []) if c}
@@ -144,20 +218,13 @@ def compute_capability_score(candidate_analysis, job_analysis):
     if not job_caps:
         return 80.0  # Default if no capabilities required
 
-    # Expand candidate capabilities with related terms
-    expanded = set(candidate_caps)
-    for cap in candidate_caps:
-        related = SKILL_RELATIONSHIPS.get(cap, [])
-        expanded.update(r.lower() for r in related)
+    # Pre-compute token sets for candidate capabilities
+    candidate_tokens_map = {cap: _tokenize(cap) for cap in candidate_caps}
 
-    matched = len(candidate_caps & job_caps) + len(expanded & job_caps - candidate_caps)
-    # Deduplicate: count each job cap only once
     matched_job_caps = set()
-    for cap in job_caps:
-        if cap in candidate_caps:
-            matched_job_caps.add(cap)
-        elif cap in expanded:
-            matched_job_caps.add(cap)
+    for job_cap in job_caps:
+        if _capabilities_match(job_cap, candidate_caps, candidate_tokens_map):
+            matched_job_caps.add(job_cap)
 
     score = (len(matched_job_caps) / len(job_caps)) * 100
     return round(min(100.0, score), 1)

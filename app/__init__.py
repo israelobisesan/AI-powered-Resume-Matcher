@@ -1,3 +1,4 @@
+import logging
 from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
@@ -15,6 +16,14 @@ def create_app(config_name='default'):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
 
+    # Configure logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s %(levelname)s %(name)s: %(message)s'
+    )
+    logger = logging.getLogger(__name__)
+    logger.info(f'App starting with config: {config_name}')
+
     db.init_app(app)
     login_manager.init_app(app)
     csrf.init_app(app)
@@ -29,15 +38,11 @@ def create_app(config_name='default'):
     from app.routes.seeker import seeker_bp
     from app.routes.recruiter import recruiter_bp
     from app.routes.resume import resume_bp
-    from app.routes.jobs import jobs_bp
-    from app.routes.matching import matching_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(seeker_bp)
     app.register_blueprint(recruiter_bp)
     app.register_blueprint(resume_bp)
-    app.register_blueprint(jobs_bp)
-    app.register_blueprint(matching_bp)
 
     from app.routes.main import main_bp
     app.register_blueprint(main_bp)

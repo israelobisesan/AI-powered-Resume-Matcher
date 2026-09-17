@@ -121,51 +121,11 @@ class NLPTestCase(BaseTestCase):
         phone = extract_phone('Call +234 801 234 5678')
         self.assertIn('234', phone)
 
-    def test_skills_extraction(self):
-        from app.services.nlp_service import extract_skills
-        skills = extract_skills('Python Flask SQL Git Docker')
-        self.assertIn('python', skills)
-        self.assertIn('flask', skills)
-        self.assertIn('sql', skills)
-
     def test_education_extraction(self):
         from app.services.nlp_service import extract_education
         edu = extract_education('B.Sc. Computer Science\nUniversity of Lagos\n2020')
         self.assertTrue(len(edu) > 0)
         self.assertIn('B.Sc', edu[0]['degree'])
-
-
-class LegacyMatchingTestCase(BaseTestCase):
-    """Tests for the legacy matching_service.py functions (kept for backward compatibility)."""
-
-    def test_tfidf_similarity(self):
-        from app.services.matching_service import calculate_tfidf_similarity
-        score = calculate_tfidf_similarity(
-            'Python Flask developer',
-            'Looking for a Python developer with Flask'
-        )
-        self.assertGreater(score, 0)
-
-    def test_skill_matching(self):
-        from app.services.matching_service import calculate_skill_score
-        score, matched, missing = calculate_skill_score(
-            ['Python', 'Flask', 'SQL'],
-            ['Python', 'Flask', 'SQL', 'Git', 'Docker']
-        )
-        self.assertEqual(score, 60.0)
-        self.assertEqual(len(matched), 3)
-        self.assertEqual(len(missing), 2)
-
-    def test_experience_score(self):
-        from app.services.matching_service import calculate_experience_score
-        self.assertEqual(calculate_experience_score(5, 3), 100.0)
-        self.assertEqual(calculate_experience_score(2, 3), 66.67)
-
-    def test_final_score(self):
-        from app.services.matching_service import calculate_final_score
-        score = calculate_final_score(80, 80, 100, 100)
-        self.assertGreater(score, 0)
-        self.assertLessEqual(score, 100)
 
 
 class EmbeddingServiceTestCase(BaseTestCase):

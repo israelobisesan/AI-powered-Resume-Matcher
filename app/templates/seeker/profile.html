@@ -4,9 +4,12 @@
 <div class="max-w-4xl mx-auto px-4 py-8">
     <h1 class="text-2xl font-bold text-gray-900 mb-6">My Profile</h1>
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <h2 class="text-lg font-bold text-gray-900 mb-4">Account Information</h2>
-        <div class="grid md:grid-cols-2 gap-4">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-bold text-gray-900">Account Information</h2>
+            <a href="{{ url_for('seeker.edit_profile') }}" class="text-primary-600 hover:text-primary-700 text-sm font-medium">Edit</a>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                 <label class="text-sm text-gray-500">Name</label>
                 <p class="font-medium text-gray-900">{{ current_user.name }}</p>
@@ -27,12 +30,12 @@
     </div>
 
     {% if resume %}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-6">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-lg font-bold text-gray-900">Resume Profile</h2>
             <a href="{{ url_for('resume.edit_resume') }}" class="text-primary-600 hover:text-primary-700 text-sm font-medium">Edit</a>
         </div>
-        <div class="grid md:grid-cols-2 gap-4 mb-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
                 <label class="text-sm text-gray-500">Name on Resume</label>
                 <p class="font-medium text-gray-900">{{ resume.candidate_name or 'Not detected' }}</p>

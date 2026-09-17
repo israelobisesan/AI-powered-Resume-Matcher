@@ -1,69 +1,4 @@
 import re
-import json
-
-SKILLS_DICTIONARY = {
-    'programming': [
-        'python', 'java', 'javascript', 'typescript', 'c++', 'c#', 'php', 'ruby',
-        'go', 'rust', 'swift', 'kotlin', 'scala', 'r', 'matlab', 'perl', 'bash',
-        'sql', 'html', 'css', 'sass', 'scss'
-    ],
-    'frameworks': [
-        'flask', 'django', 'fastapi', 'spring', 'react', 'angular', 'vue',
-        'node.js', 'express', 'next.js', 'nuxt.js', 'laravel', 'rails',
-        'bootstrap', 'tailwind', 'tailwind css', 'jquery', 'jquery'
-    ],
-    'databases': [
-        'mysql', 'postgresql', 'mongodb', 'sqlite', 'oracle', 'sql server',
-        'redis', 'elasticsearch', 'cassandra', 'firebase', 'dynamodb'
-    ],
-    'tools': [
-        'git', 'github', 'gitlab', 'docker', 'kubernetes', 'jenkins', 'aws',
-        'azure', 'gcp', 'linux', 'nginx', 'apache', 'vim', 'vscode', 'jira',
-        'terraform', 'ansible', 'ci/cd', 'devops'
-    ],
-    'data': [
-        'machine learning', 'deep learning', 'data analysis', 'data science',
-        'tensorflow', 'pytorch', 'pandas', 'numpy', 'scikit-learn', 'nlp',
-        'natural language processing', 'computer vision', 'power bi', 'tableau',
-        'excel', 'spark', 'hadoop', 'etl'
-    ],
-    'professional': [
-        'communication', 'leadership', 'teamwork', 'project management',
-        'problem solving', 'critical thinking', 'time management',
-        'analytical skills', 'attention to detail', 'creativity',
-        'adaptability', 'collaboration', 'presentation', 'negotiation'
-    ],
-    'soft_skills': [
-        'team player', 'self-motivated', 'detail-oriented', 'fast learner',
-        ' multitasking', 'organized', 'proactive', 'results-driven'
-    ]
-}
-
-
-def get_all_skills():
-    """Return a flat list of all skills."""
-    all_skills = []
-    for category in SKILLS_DICTIONARY.values():
-        all_skills.extend(category)
-    return list(set(all_skills))
-
-
-def extract_skills(text):
-    """Extract skills from text using dictionary matching."""
-    if not text:
-        return []
-
-    text_lower = text.lower()
-    found_skills = []
-
-    for category_skills in SKILLS_DICTIONARY.values():
-        for skill in category_skills:
-            pattern = r'\b' + re.escape(skill) + r'\b'
-            if re.search(pattern, text_lower):
-                if skill not in found_skills:
-                    found_skills.append(skill)
-
-    return found_skills
 
 
 def extract_email(text):
@@ -274,11 +209,13 @@ def calculate_years_experience(experience_list):
 
 
 def extract_resume_info(text):
-    """Extract all structured information from resume text."""
+    """Extract all structured information from resume text.
+
+    Skills are no longer extracted here — Gemini analysis provides them.
+    """
     email = extract_email(text)
     phone = extract_phone(text)
     name = extract_name(text, email)
-    skills = extract_skills(text)
     education = extract_education(text)
     experience = extract_experience(text)
     years_experience = calculate_years_experience(experience)
@@ -287,7 +224,7 @@ def extract_resume_info(text):
         'candidate_name': name,
         'email': email,
         'phone': phone,
-        'skills': skills,
+        'skills': [],
         'education': education,
         'work_experience': experience,
         'years_experience': years_experience

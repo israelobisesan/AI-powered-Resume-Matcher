@@ -61,7 +61,6 @@ def upload_resume():
             existing_resume.candidate_name = info['candidate_name']
             existing_resume.email = info['email']
             existing_resume.phone = info['phone']
-            existing_resume.skills = json.dumps(info['skills'])
             existing_resume.education = json.dumps(info['education'])
             existing_resume.work_experience = json.dumps(info['work_experience'])
             # Reset analysis so Gemini re-analyzes the new content
@@ -78,7 +77,6 @@ def upload_resume():
                 candidate_name=info['candidate_name'],
                 email=info['email'],
                 phone=info['phone'],
-                skills=json.dumps(info['skills']),
                 education=json.dumps(info['education']),
                 work_experience=json.dumps(info['work_experience']),
                 analysis_status='pending'
@@ -87,7 +85,7 @@ def upload_resume():
 
         db.session.commit()
         flash('Resume updated successfully!' if existing_resume else 'Resume uploaded successfully!', 'success')
-        return redirect(url_for('resume.view_resume'))
+        return redirect(url_for('resume.edit_resume'))
 
     return render_template('seeker/upload_resume.html')
 

@@ -4,42 +4,51 @@
 <div class="max-w-4xl mx-auto px-4 py-8">
     <a href="{{ url_for('seeker.browse_jobs') }}" class="text-primary-600 hover:underline text-sm mb-4 inline-block">&larr; Back to Jobs</a>
 
-    <div class="flex justify-between items-start mb-6">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900">{{ job.title }}</h1>
-            <p class="text-lg text-gray-600 mt-1">{{ job.company }} &bull; {{ job.location or 'Remote' }}</p>
+    <!-- Header Section - Stacks on mobile -->
+    <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-6">
+        <div class="flex-1">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-900">{{ job.title }}</h1>
+            <p class="text-base md:text-lg text-gray-600 mt-1">{{ job.company }} &bull; {{ job.location or 'Remote' }}</p>
         </div>
-        <div class="flex items-center space-x-3">
+
+        <!-- Match Score - Shows on mobile above buttons -->
+        {% if match %}
+        <div class="flex md:block items-center gap-4">
+            <div class="text-center bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                <div class="w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center {% if match.final_score >= 70 %}bg-green-100{% elif match.final_score >= 50 %}bg-yellow-100{% else %}bg-red-100{% endif %}">
+                    <span class="text-xl md:text-2xl font-bold {% if match.final_score >= 70 %}text-green-600{% elif match.final_score >= 50 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                        {{ match.final_score }}%
+                    </span>
+                </div>
+                <p class="text-xs md:text-sm text-gray-500 mt-1">Match Score</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap gap-2">
             <button onclick="toggleApply({{ job.id }}, this)" id="apply-btn" class="px-4 py-2 rounded-lg text-sm font-medium transition {% if application %}bg-green-100 text-green-700 hover:bg-green-200{% else %}bg-primary-600 text-white hover:bg-primary-700{% endif %}">
                 {% if application %}Applied{% else %}Apply Now{% endif %}
             </button>
             <button onclick="toggleSave({{ job.id }}, this)" id="save-btn" class="px-4 py-2 rounded-lg text-sm font-medium transition {% if is_saved %}bg-yellow-100 text-yellow-700 hover:bg-yellow-200{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">
                 {% if is_saved %}Saved{% else %}Save Job{% endif %}
             </button>
-            {% if match %}
-            <div class="text-center bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                <div class="w-20 h-20 rounded-full flex items-center justify-center {% if match.final_score >= 70 %}bg-green-100{% elif match.final_score >= 50 %}bg-yellow-100{% else %}bg-red-100{% endif %}">
-                    <span class="text-2xl font-bold {% if match.final_score >= 70 %}text-green-600{% elif match.final_score >= 50 %}text-yellow-600{% else %}text-red-600{% endif %}">
-                        {{ match.final_score }}%
-                    </span>
-                </div>
-                <p class="text-sm text-gray-500 mt-1">Match Score</p>
-            </div>
-        {% endif %}
+        </div>
     </div>
 
-    <div class="grid lg:grid-cols-3 gap-6">
+    <!-- Main Content Grid - Stacks on mobile -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 space-y-6">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 md:p-6">
                 <h2 class="text-lg font-bold text-gray-900 mb-3">Job Description</h2>
-                <p class="text-gray-700 whitespace-pre-line">{{ job.description }}</p>
+                <p class="text-gray-700 whitespace-pre-line text-sm md:text-base">{{ job.description }}</p>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 md:p-6">
                 <h2 class="text-lg font-bold text-gray-900 mb-3">Required Skills</h2>
                 <div class="flex flex-wrap gap-2">
                     {% for skill in req_skills %}
-                    <span class="px-3 py-1 rounded-full text-sm {% if match and skill in match.matched_skills %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-700{% endif %}">
+                    <span class="px-3 py-1 rounded-full text-xs md:text-sm {% if match and skill in match.matched_skills %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-700{% endif %}">
                         {% if match and skill in match.matched_skills %}✓ {% endif %}{{ skill }}
                     </span>
                     {% endfor %}
@@ -47,19 +56,20 @@
             </div>
 
             {% if pref_skills %}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 md:p-6">
                 <h2 class="text-lg font-bold text-gray-900 mb-3">Preferred Skills</h2>
                 <div class="flex flex-wrap gap-2">
                     {% for skill in pref_skills %}
-                    <span class="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm">{{ skill }}</span>
+                    <span class="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs md:text-sm">{{ skill }}</span>
                     {% endfor %}
                 </div>
             </div>
             {% endif %}
         </div>
 
+        <!-- Sidebar - Full width on mobile -->
         <div class="space-y-6">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 md:p-6">
                 <h3 class="font-bold text-gray-900 mb-3">Details</h3>
                 <div class="space-y-2 text-sm">
                     <div class="flex justify-between"><span class="text-gray-500">Type</span><span class="font-medium">{{ job.employment_type or 'Full-time' }}</span></div>
@@ -71,7 +81,7 @@
             </div>
 
             {% if match %}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 md:p-6">
                 <h3 class="font-bold text-gray-900 mb-3">Match Breakdown</h3>
                 <div class="space-y-3">
                     <div>
@@ -122,13 +132,13 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 md:p-6">
                 <h3 class="font-bold text-gray-900 mb-2">Why this job matches</h3>
                 <p class="text-sm text-gray-600">{{ match.explanation }}</p>
             </div>
 
             {% if match.direct_matches %}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 md:p-6">
                 <h3 class="font-bold text-gray-900 mb-2">Direct Skill Matches</h3>
                 <div class="flex flex-wrap gap-1">
                     {% for skill in match.direct_matches %}
@@ -139,7 +149,7 @@
             {% endif %}
 
             {% if match.related_matches %}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 md:p-6">
                 <h3 class="font-bold text-gray-900 mb-2">Related Skills</h3>
                 <div class="flex flex-wrap gap-1">
                     {% for skill in match.related_matches %}
@@ -151,7 +161,7 @@
             {% endif %}
 
             {% if match.missing_skills %}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 md:p-6">
                 <h3 class="font-bold text-gray-900 mb-2">Missing Skills</h3>
                 <div class="flex flex-wrap gap-1">
                     {% for skill in match.missing_skills %}

@@ -27,12 +27,6 @@ class Config:
         'education': 0.05,   # education requirement alignment
     }
 
-    # Legacy weights kept for backward compatibility with matching_service.py tests
-    TFIDF_WEIGHT = 0.40
-    SKILL_WEIGHT = 0.40
-    EXPERIENCE_WEIGHT = 0.10
-    EDUCATION_WEIGHT = 0.10
-
     # Analysis version — increment to force re-analysis of all documents
     CURRENT_ANALYSIS_VERSION = 1
 

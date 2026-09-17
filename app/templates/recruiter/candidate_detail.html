@@ -4,21 +4,21 @@
 <div class="max-w-4xl mx-auto px-4 py-8">
     <a href="javascript:history.back()" class="text-primary-600 hover:underline text-sm mb-4 inline-block">&larr; Back</a>
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <div class="flex items-center justify-between">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div class="flex items-center space-x-4">
-                <div class="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center">
-                    <span class="text-2xl text-primary-700 font-bold">{{ resume.candidate_name[0] if resume.candidate_name else '?' }}</span>
+                <div class="w-12 h-12 md:w-16 md:h-16 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span class="text-xl md:text-2xl text-primary-700 font-bold">{{ resume.candidate_name[0] if resume.candidate_name else '?' }}</span>
                 </div>
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">{{ resume.candidate_name or 'Unknown' }}</h1>
-                    <p class="text-gray-600">{{ resume.email or '' }} {% if resume.phone %}&bull; {{ resume.phone }}{% endif %}</p>
-                    <p class="text-sm text-gray-500">Uploaded {{ resume.uploaded_at.strftime('%B %d, %Y') }}</p>
+                    <h1 class="text-xl md:text-2xl font-bold text-gray-900">{{ resume.candidate_name or 'Unknown' }}</h1>
+                    <p class="text-sm md:text-base text-gray-600 break-all">{{ resume.email or '' }} {% if resume.phone %}&bull; {{ resume.phone }}{% endif %}</p>
+                    <p class="text-xs md:text-sm text-gray-500">Uploaded {{ resume.uploaded_at.strftime('%B %d, %Y') }}</p>
                 </div>
             </div>
 
             {% if application %}
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center gap-2 flex-shrink-0">
                 {% if application.status == 'pending' %}
                 <button onclick="shortlistCandidate({{ application.id }})" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition">
                     Shortlist
@@ -75,7 +75,7 @@
         {% endif %}
     </div>
 
-    <div class="grid md:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         <!-- Education -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 class="text-lg font-bold text-gray-900 mb-4">Education</h2>

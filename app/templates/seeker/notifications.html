@@ -7,12 +7,12 @@
     {% if notifications %}
     <div class="space-y-3">
         {% for notif in notifications %}
-        <div class="bg-white rounded-xl shadow-sm border p-6 transition hover:shadow-md {% if not notif.is_read %}border-primary-200 bg-primary-50{% else %}border-gray-200{% endif %}" id="notif-{{ notif.id }}">
-            <div class="flex justify-between items-start">
-                <div class="flex-grow">
-                    <div class="flex items-center space-x-2 mb-2">
+        <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 transition hover:shadow-md {% if not notif.is_read %}border-primary-200 bg-primary-50{% else %}border-gray-200{% endif %}" id="notif-{{ notif.id }}">
+            <div class="flex justify-between items-start gap-3">
+                <div class="flex-grow min-w-0">
+                    <div class="flex flex-wrap items-center gap-2 mb-2">
                         {% if not notif.is_read %}
-                        <span class="w-2 h-2 bg-red-500 rounded-full"></span>
+                        <span class="w-2 h-2 bg-red-500 rounded-full flex-shrink-0"></span>
                         {% endif %}
                         <span class="text-sm font-medium text-gray-900">{{ notif.recruiter.name }}</span>
                         <span class="text-xs text-gray-400">{{ notif.created_at.strftime('%b %d, %Y at %I:%M %p') }}</span>
@@ -21,7 +21,7 @@
                     <a href="{{ url_for('seeker.job_detail', job_id=notif.job_id) }}" class="text-sm text-primary-600 hover:underline mt-2 inline-block">View Job: {{ notif.job.title }}</a>
                 </div>
                 {% if not notif.is_read %}
-                <button onclick="markRead({{ notif.id }})" class="ml-4 px-3 py-1 text-xs text-primary-600 hover:bg-primary-100 rounded-lg transition">
+                <button onclick="markRead({{ notif.id }})" class="flex-shrink-0 ml-2 px-3 py-1 text-xs text-primary-600 hover:bg-primary-100 rounded-lg transition">
                     Mark as read
                 </button>
                 {% endif %}

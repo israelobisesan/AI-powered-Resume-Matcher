@@ -28,9 +28,8 @@ class Match(db.Model):
     analysis_version = db.Column(db.String(20), nullable=True)  # e.g. "r1_j1" for version tracking
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # Legacy fields kept for backward compatibility
-    tfidf_score = db.Column(db.Float, default=0.0)
-    matched_skills = db.Column(db.Text, nullable=True)  # JSON string (kept for templates)
+    # Backward-compatible fields
+    matched_skills = db.Column(db.Text, nullable=True)  # JSON string (used by templates)
 
     __table_args__ = (
         db.UniqueConstraint('resume_id', 'job_id', name='unique_resume_job_match'),

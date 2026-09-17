@@ -41,6 +41,12 @@ def ensure_resume_analysis(resume):
         resume.analysis_version = Config.CURRENT_ANALYSIS_VERSION
         resume.analysis_model = Config.GEMINI_MODEL
         resume.analyzed_at = datetime.utcnow()
+
+        # Repopulate resume.skills from Gemini (single source of truth)
+        direct_skills = analysis.get('direct_skills', [])
+        related_skills = analysis.get('related_skills', [])
+        resume.skills = json.dumps(direct_skills + related_skills)
+
         db.session.commit()
 
         return analysis
@@ -62,7 +68,6 @@ def ensure_job_analysis(job):
         generate_embedding_from_analysis
     )
     from app.services.ai_analysis_service import analyze_job
-    from app.services.nlp_service import extract_skills as nlp_extract_skills
 
     # Build content hash from all job fields
     hash_input = f"{job.title}|{job.description}|{job.required_skills}|{job.preferred_skills}|{job.minimum_experience}|{job.education_requirement}"
@@ -133,8 +138,8 @@ def compute_match(resume, job):
     resume_embedding = deserialize_embedding(resume.semantic_embedding)
     job_embedding = deserialize_embedding(job.semantic_embedding)
 
-    # Get candidate skills from NLP extraction
-    candidate_skills = json.loads(resume.skills) if resume.skills else []
+    # Get candidate skills from Gemini AI analysis (not NLP dictionary)
+    candidate_skills = resume_analysis.get('direct_skills', []) + resume_analysis.get('related_skills', [])
 
     # Compute all scores
     skill_matches = compute_skill_matches(candidate_skills, job_analysis)
@@ -190,14 +195,19 @@ def calculate_match(resume, job):
     existing = Match.query.filter_by(resume_id=resume.id, job_id=job.id).first()
     if existing:
         # Check if either document has been updated since this match was computed
-        resume_changed = (resume.content_hash and
-                         resume.analysis_status == 'completed' and
-                         existing.analysis_version and
-                         int(existing.analysis_version.split('_')[0].replace('r', '')) < Config.CURRENT_ANALYSIS_VERSION) if existing.analysis_version else True
-        job_changed = (job.content_hash and
-                      job.analysis_status == 'completed' and
-                      existing.analysis_version and
-                      int(existing.analysis_version.split('_')[1].replace('j', '')) < Config.CURRENT_ANALYSIS_VERSION) if existing.analysis_version else True
+        # Resume changed if: content_hash is None (reset), or version is outdated
+        resume_changed = (
+            not resume.content_hash or
+            resume.analysis_status != 'completed' or
+            not existing.analysis_version or
+            int(existing.analysis_version.split('_')[0].replace('r', '')) < Config.CURRENT_ANALYSIS_VERSION
+        )
+        job_changed = (
+            not job.content_hash or
+            job.analysis_status != 'completed' or
+            not existing.analysis_version or
+            int(existing.analysis_version.split('_')[1].replace('j', '')) < Config.CURRENT_ANALYSIS_VERSION
+        )
 
         if not resume_changed and not job_changed:
             return _match_to_dict(existing)
@@ -346,15 +356,4 @@ def _match_to_dict(match):
         'direct_matches': json.loads(match.direct_matches) if match.direct_matches else [],
         'related_matches': json.loads(match.related_matches) if match.related_matches else [],
         'explanation': match.explanation or '',
-        'tfidf_score': getattr(match, 'tfidf_score', 0.0),
     }
-
-
-def _parse_skills(skills_raw):
-    """Parse skills from JSON string or comma-separated string."""
-    if not skills_raw:
-        return []
-    try:
-        return json.loads(skills_raw)
-    except (json.JSONDecodeError, TypeError):
-        return [s.strip() for s in skills_raw.split(',') if s.strip()]

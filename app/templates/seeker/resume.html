@@ -2,22 +2,22 @@
 {% block title %}My Resume{% endblock %}
 {% block content %}
 <div class="max-w-4xl mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
         <h1 class="text-2xl font-bold text-gray-900">My Resume</h1>
-        <div class="space-x-2">
-            <a href="{{ url_for('resume.edit_resume') }}" class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition text-sm">
+        <div class="flex gap-2">
+            <a href="{{ url_for('resume.edit_resume') }}" class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition text-sm text-center">
                 Edit Resume
             </a>
-            <a href="{{ url_for('resume.upload_resume') }}" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition text-sm">
+            <a href="{{ url_for('resume.upload_resume') }}" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition text-sm text-center">
                 Upload New
             </a>
         </div>
     </div>
 
     <!-- Personal Information -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-6">
         <h2 class="text-lg font-bold text-gray-900 mb-4">Personal Information</h2>
-        <div class="grid md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                 <label class="text-sm text-gray-500">Name</label>
                 <p class="font-medium text-gray-900">{{ resume.candidate_name or 'Not detected' }}</p>

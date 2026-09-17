@@ -1,22 +1,9 @@
 import json
 import logging
-from datetime import datetime
-from google import genai
 from config import Config
+from app.services.gemini_service import get_gemini_client
 
 logger = logging.getLogger(__name__)
-
-
-def get_gemini_client():
-    """Initialize and return a Gemini client."""
-    api_key = Config.GEMINI_API_KEY
-    if not api_key:
-        return None
-    try:
-        client = genai.Client(api_key=api_key)
-        return client
-    except Exception:
-        return None
 
 
 RESUME_ANALYSIS_PROMPT = """You are an expert HR analyst. Analyze the following resume and extract a structured semantic understanding.
